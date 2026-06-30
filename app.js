@@ -857,8 +857,9 @@ function injectLiveStyles() {
     .system-pill.is-live .icon { color: var(--green); fill: currentColor; stroke: none; }
     .system-pill.is-admin .icon { color: var(--blue); fill: currentColor; stroke: none; }
     .system-pill.is-error .icon { color: var(--red); fill: currentColor; stroke: none; }
-    .read-only .task-form-panel, .read-only .pet-board, .read-only .pet-events-panel form { opacity: 0.52; }
-    .read-only form input, .read-only form select, .read-only form textarea, .read-only form button { pointer-events: none; }
+    .read-only .task-form-panel, .read-only .pet-board, .read-only .pet-events-panel form { display: none; }
+    .read-only .workspace, .read-only .pet-workspace { grid-template-columns: 1fr; }
+    .read-only .task-board, .read-only .pet-events-panel, .read-only .pet-month-panel { min-width: 0; }
     .read-only .card-actions { display: none; }
     @media (max-width: 760px) { .topbar { align-items: flex-start; gap: 10px; } .topbar-actions { flex-wrap: wrap; justify-content: flex-end; } }
   `;
