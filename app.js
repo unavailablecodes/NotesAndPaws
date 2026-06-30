@@ -865,6 +865,7 @@ let masterAdminPanel = null;
 let masterAdminList = null;
 let masterAdminStats = null;
 const originalRenderTasks = renderTasks;
+const isMasterAdminRoute = /\/admin\/?$/.test(location.pathname);
 
 function injectLiveStyles() {
   const style = document.createElement("style");
@@ -922,6 +923,7 @@ function setupLiveControls() {
 }
 
 function setupMasterAdminPanel(topbar) {
+  if (!isMasterAdminRoute) return;
   masterAdminPanel = document.createElement("section");
   masterAdminPanel.className = "master-admin-panel";
   masterAdminPanel.innerHTML = [
@@ -991,9 +993,9 @@ async function refreshAdminMode() {
     authButton.innerHTML = currentUser ? `${icon("user")}<span>Logout</span>` : `${icon("user")}<span>Admin Login</span>`;
   }
 
-  if (masterAdminPanel) masterAdminPanel.classList.toggle("visible", adminMode);
+  if (masterAdminPanel) masterAdminPanel.classList.toggle("visible", adminMode && isMasterAdminRoute);
 
-  if (adminMode) setSyncStatus("Live admin", "admin");
+  if (adminMode) setSyncStatus(isMasterAdminRoute ? "Master admin" : "Live admin", "admin");
   else if (currentUser) setSyncStatus("Signed in, view only", "live");
   else setSyncStatus("Live view only", "live");
 }
@@ -1083,7 +1085,7 @@ function toDbTask(task) {
 async function loadCloudData() {
   if (!cloudReady) return;
   await Promise.all([loadCloudTasks(), loadCloudPetData()]);
-  if (adminMode) await loadMasterAdminDashboard();
+  if (isMasterAdminRoute && adminMode) await loadMasterAdminDashboard();
   renderTasks();
   fillPetForm();
 }
@@ -1117,7 +1119,7 @@ function escapeHtml(value) {
 }
 
 async function loadMasterAdminDashboard() {
-  if (!adminMode || !masterAdminPanel) return;
+  if (!isMasterAdminRoute || !adminMode || !masterAdminPanel) return;
   masterAdminStats.innerHTML = renderMasterStat("Loading", "...");
   masterAdminList.innerHTML = "";
 
@@ -1612,9 +1614,9 @@ refreshAdminMode = async function refreshAdminModeProduct() {
     manageButton.innerHTML = manageMode ? `${icon("check")}<span>Quick View</span>` : `${icon("edit")}<span>Manage</span>`;
   }
   if (shareButton) shareButton.classList.toggle("hidden", !ownerMode);
-  if (masterAdminPanel) masterAdminPanel.classList.toggle("visible", adminMode);
+  if (masterAdminPanel) masterAdminPanel.classList.toggle("visible", adminMode && isMasterAdminRoute);
 
-  if (adminMode) setSyncStatus("Master admin", "admin");
+  if (adminMode) setSyncStatus(isMasterAdminRoute ? "Master admin" : "My workspace", "admin");
   else if (ownerMode) setSyncStatus("My workspace", "admin");
   else setSyncStatus("Private by default", "live");
 };
@@ -1624,7 +1626,7 @@ loadCloudData = async function loadCloudDataProduct() {
   setupProductLayer();
   if (currentUser) await ensureProfile();
   await Promise.all([loadCloudTasks(), loadCloudPetData()]);
-  if (adminMode) await loadMasterAdminDashboard();
+  if (isMasterAdminRoute && adminMode) await loadMasterAdminDashboard();
   renderTasks();
   fillPetForm();
 };

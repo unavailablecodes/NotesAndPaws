@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notes & Paws Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="icon-plus" viewBox="0 0 24 24">
+        <path d="M12 5v14M5 12h14" />
+      </symbol>
+      <symbol id="icon-x" viewBox="0 0 24 24">
+        <path d="M18 6 6 18M6 6l12 12" />
+      </symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-3.4-3.4" />
+      </symbol>
+      <symbol id="icon-circle" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8" />
+      </symbol>
+      <symbol id="icon-check" viewBox="0 0 24 24">
+        <path d="m5 12 4 4L19 6" />
+      </symbol>
+      <symbol id="icon-layers" viewBox="0 0 24 24">
+        <path d="m12 3 8 4.5-8 4.5-8-4.5L12 3Z" />
+        <path d="m4 12 8 4.5 8-4.5" />
+        <path d="m4 16.5 8 4.5 8-4.5" />
+      </symbol>
+      <symbol id="icon-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="8" />
+        <path d="M12 8v5l3 2" />
+      </symbol>
+      <symbol id="icon-bolt" viewBox="0 0 24 24">
+        <path d="m13 2-8 12h7l-1 8 8-12h-7l1-8Z" />
+      </symbol>
+      <symbol id="icon-edit" viewBox="0 0 24 24">
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
+      </symbol>
+      <symbol id="icon-trash" viewBox="0 0 24 24">
+        <path d="M3 6h18" />
+        <path d="M8 6V4h8v2" />
+        <path d="M19 6l-1 14H6L5 6" />
+      </symbol>
+      <symbol id="icon-map" viewBox="0 0 24 24">
+        <path d="M9 18 3 21V6l6-3 6 3 6-3v15l-6 3-6-3Z" />
+        <path d="M9 3v15M15 6v15" />
+      </symbol>
+      <symbol id="icon-user" viewBox="0 0 24 24">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21a8 8 0 0 1 16 0" />
+      </symbol>
+      <symbol id="icon-building" viewBox="0 0 24 24">
+        <path d="M4 21h16" />
+        <path d="M6 21V7l6-4 6 4v14" />
+        <path d="M9 10h.01M12 10h.01M15 10h.01M9 14h.01M12 14h.01M15 14h.01" />
+      </symbol>
+      <symbol id="icon-paw" viewBox="0 0 24 24">
+        <ellipse cx="6.55" cy="9.35" rx="1.55" ry="2.1" transform="rotate(-18 6.55 9.35)" />
+        <ellipse cx="10.05" cy="6.75" rx="1.58" ry="2.25" transform="rotate(-8 10.05 6.75)" />
+        <ellipse cx="13.95" cy="6.75" rx="1.58" ry="2.25" transform="rotate(8 13.95 6.75)" />
+        <ellipse cx="17.45" cy="9.35" rx="1.55" ry="2.1" transform="rotate(18 17.45 9.35)" />
+        <path d="M12 12.35c-2.78 0-5.08 2.05-5.08 4.44 0 1.58 1.17 2.7 2.68 2.7.86 0 1.55-.4 2.4-.4s1.54.4 2.4.4c1.51 0 2.68-1.12 2.68-2.7 0-2.39-2.3-4.44-5.08-4.44Z" />
+      </symbol>
+      <symbol id="icon-file" viewBox="0 0 24 24">
+        <path d="M14 3H6v18h12V7l-4-4Z" />
+        <path d="M14 3v4h4" />
+        <path d="M9 13h6M9 17h4" />
+      </symbol>
+      <symbol id="icon-bag" viewBox="0 0 24 24">
+        <path d="M6 8h12l-1 13H7L6 8Z" />
+        <path d="M9 8a3 3 0 0 1 6 0" />
+      </symbol>
+      <symbol id="icon-heart" viewBox="0 0 24 24">
+        <path d="M20.8 4.6c-1.8-1.8-4.6-1.8-6.4 0L12 7l-2.4-2.4c-1.8-1.8-4.6-1.8-6.4 0s-1.8 4.6 0 6.4L12 19.8 20.8 11c1.8-1.8 1.8-4.6 0-6.4Z" />
+      </symbol>
+    </svg>
+    <main class="app-shell">
+      <nav class="topbar" aria-label="Dashboard">
+        <div class="brand-mark">
+          <span aria-hidden="true"></span>
+          <strong>Notes & Paws Admin</strong>
+        </div>
+        <button class="view-toggle" id="viewToggle" type="button" aria-pressed="false" title="Open Mishti dashboard">
+          <svg class="icon paw-icon"><use href="#icon-paw"></use></svg>
+          <span>Mishti</span>
+        </button>
+      </nav>
+
+      <section class="dashboard-view" id="personalDashboard">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Master Admin</p>
+          <p class="welcome-line" id="welcomeLine">Welcome, Vikash.</p>
+          <h1>Platform control room.</h1>
+          <p class="daily-quote" id="dailyQuote"></p>
+          <p class="hero-copy">
+            A private owner view for users, pets, shares, and platform health.
+          </p>
+        </div>
+        <div class="hero-stats" aria-label="Task summary">
+          <div>
+            <svg class="icon"><use href="#icon-layers"></use></svg>
+            <span id="totalTasks">0</span>
+            <p>Total</p>
+          </div>
+          <div>
+            <svg class="icon"><use href="#icon-clock"></use></svg>
+            <span id="dueSoonTasks">0</span>
+            <p>Due Soon</p>
+          </div>
+          <div>
+            <svg class="icon"><use href="#icon-bolt"></use></svg>
+            <span id="highPriorityTasks">0</span>
+            <p>High Priority</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <aside class="task-form-panel" aria-labelledby="formTitle">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Create or Update</p>
+              <h2 id="formTitle">Add Task</h2>
+            </div>
+            <button class="icon-button hidden" id="cancelEditButton" type="button" title="Cancel edit" aria-label="Cancel edit">
+              <svg class="icon"><use href="#icon-x"></use></svg>
+            </button>
+          </div>
+
+          <form id="taskForm" class="task-form">
+            <input type="hidden" id="taskId" />
+
+            <label>
+              <span>Task</span>
+              <textarea id="taskName" rows="3" placeholder="What needs to be done?" required></textarea>
+            </label>
+
+            <div class="two-column">
+              <label>
+                <span>Date Created</span>
+                <input id="createdDate" type="date" required />
+              </label>
+              <label>
+                <span>Priority</span>
+                <select id="priority" required>
+                  <option value="High">High</option>
+                  <option value="Medium" selected>Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="two-column">
+              <label>
+                <span>Workstream</span>
+                <select id="workstream" required>
+                  <option value="Personal" selected>Personal</option>
+                  <option value="Family">Family</option>
+                  <option value="Work">Work</option>
+                </select>
+              </label>
+              <label>
+                <span>Location</span>
+                <select id="locationType" required>
+                  <option value="Current City">Current City</option>
+                  <option value="Village">Village</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="two-column">
+              <label>
+                <span>Next Follow-up</span>
+                <input id="nextFollowupDate" type="date" required />
+              </label>
+              <label>
+                <span>Person / Team in Touch</span>
+                <input id="inTouchWith" type="text" placeholder="Family member, team, office, etc." />
+              </label>
+            </div>
+
+            <div class="two-column">
+              <label>
+                <span>Last Follow-up Via</span>
+                <select id="lastFollowupVia">
+                  <option value="Call">Call</option>
+                  <option value="Message">Message</option>
+                  <option value="Email">Email</option>
+                  <option value="Not Done">Not Done</option>
+                </select>
+              </label>
+              <label>
+                <span>Point of Contact</span>
+                <input id="pointOfContact" type="text" placeholder="Name of person" />
+              </label>
+            </div>
+
+            <div class="govt-box">
+              <div class="checkbox-row">
+                <input id="govtInvolved" type="checkbox" />
+                <label for="govtInvolved">Government / official process involved</label>
+              </div>
+
+              <div class="govt-fields" id="govtFields">
+                <label>
+                  <span>Department Name</span>
+                  <input id="departmentName" type="text" placeholder="Department or office name" />
+                </label>
+                <label>
+                  <span>Website Link</span>
+                  <input id="websiteLink" type="url" placeholder="https://..." />
+                </label>
+                <label>
+                  <span>Ticket / Reference Number</span>
+                  <input id="ticketNumber" type="text" placeholder="Application, ticket, file number" />
+                </label>
+                <label>
+                  <span>Official / Process Contact</span>
+                  <input id="officialContact" type="text" placeholder="Officer or counter contact" />
+                </label>
+              </div>
+            </div>
+
+            <label>
+              <span>Notes</span>
+              <textarea id="notes" rows="3" placeholder="Important details, documents needed, next action..."></textarea>
+            </label>
+
+            <button class="primary-button" type="submit" id="submitButton">
+              <svg class="icon"><use href="#icon-plus"></use></svg>
+              <span>Save Task</span>
+            </button>
+          </form>
+        </aside>
+
+        <section class="task-board" aria-labelledby="boardTitle">
+          <div class="board-toolbar">
+            <div>
+              <p class="eyebrow">Manage</p>
+              <h2 id="boardTitle">Your Tasks</h2>
+            </div>
+            <div class="toolbar-controls">
+              <label class="search-field">
+                <span class="visually-hidden">Search tasks</span>
+                <svg class="icon"><use href="#icon-search"></use></svg>
+                <input id="searchInput" type="search" placeholder="Search tasks, contacts, tickets..." />
+              </label>
+              <select id="priorityFilter" aria-label="Filter by priority">
+                <option value="All">All priorities</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+              </select>
+              <select id="workstreamFilter" aria-label="Filter by workstream">
+                <option value="All">All workstreams</option>
+                <option value="Personal">Personal</option>
+                <option value="Family">Family</option>
+                <option value="Work">Work</option>
+              </select>
+              <select id="locationFilter" aria-label="Filter by location">
+                <option value="All">All locations</option>
+                <option value="Current City">Current City</option>
+                <option value="Village">Village</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="status-tabs" role="tablist" aria-label="Task status filter">
+            <button class="tab active" type="button" data-status="Open">
+              <svg class="icon"><use href="#icon-circle"></use></svg>
+              Open
+            </button>
+            <button class="tab" type="button" data-status="Done">
+              <svg class="icon"><use href="#icon-check"></use></svg>
+              Done
+            </button>
+            <button class="tab" type="button" data-status="All">
+              <svg class="icon"><use href="#icon-layers"></use></svg>
+              All
+            </button>
+          </div>
+
+          <div id="taskList" class="task-list" aria-live="polite"></div>
+
+          <div id="emptyState" class="empty-state hidden">
+            <h3>No tasks found</h3>
+            <p>Add a task or adjust your filters to see your work here.</p>
+          </div>
+        </section>
+      </section>
+      </section>
+
+      <section class="dashboard-view hidden" id="petDashboard">
+        <section class="hero pet-hero">
+          <div>
+            <p class="eyebrow">Mishti Care Board</p>
+            <p class="welcome-line">Welcome to Mishti's dashboard.</p>
+            <h1>Mishti's care, neatly tracked.</h1>
+            <p class="daily-quote">Tiny paws. Big priorities.</p>
+            <p class="hero-copy">
+              Health, grooming, shopping, and medical records in one calm place.
+            </p>
+          </div>
+          <div class="paw-stage" aria-hidden="true">
+            <span class="paw-bubble paw-one"><svg class="icon paw-icon"><use href="#icon-paw"></use></svg></span>
+            <span class="paw-bubble paw-two"><svg class="icon paw-icon"><use href="#icon-paw"></use></svg></span>
+            <span class="paw-bubble paw-three"><svg class="icon paw-icon"><use href="#icon-paw"></use></svg></span>
+          </div>
+        </section>
+
+        <section class="pet-reminders" aria-label="Mishti reminders">
+          <article class="pet-reminder-card">
+            <svg class="icon paw-icon"><use href="#icon-paw"></use></svg>
+            <span>Upcoming Pet Event</span>
+            <strong id="petUpcomingEvent">Not set</strong>
+          </article>
+          <article class="pet-reminder-card">
+            <svg class="icon"><use href="#icon-clock"></use></svg>
+            <span>Next Health Checkup</span>
+            <strong id="petNextHealth">Not set</strong>
+          </article>
+          <article class="pet-reminder-card">
+            <svg class="icon"><use href="#icon-heart"></use></svg>
+            <span>Next Deworming</span>
+            <strong id="petLastDeworming">Not set</strong>
+            <small id="petDewormingCountdown">Add last deworming date</small>
+          </article>
+          <article class="pet-reminder-card">
+            <svg class="icon"><use href="#icon-bag"></use></svg>
+            <span>Last Shopping</span>
+            <strong id="petLastShopping">Not set</strong>
+          </article>
+        </section>
+
+        <section class="pet-month-panel" aria-labelledby="petMonthTitle">
+          <div class="month-panel-heading">
+            <div>
+              <p class="eyebrow">Monthly View</p>
+              <h2 id="petMonthTitle">Performed This Month</h2>
+            </div>
+            <label class="month-picker">
+              <span>Month & Year</span>
+              <input id="petMonthFilter" type="month" />
+            </label>
+          </div>
+          <div class="pet-month-events" id="petMonthEvents" aria-live="polite"></div>
+        </section>
+
+        <section class="pet-events-panel" aria-labelledby="petEventsTitle">
+          <div class="month-panel-heading">
+            <div>
+              <p class="eyebrow">Events</p>
+              <h2 id="petEventsTitle">Pet Events Visited</h2>
+            </div>
+            <div class="event-filters">
+              <select id="petEventStatusFilter" aria-label="Filter pet events by status">
+                <option value="All">All events</option>
+                <option value="Upcoming">Upcoming</option>
+                <option value="Attended">Attended</option>
+              </select>
+              <select id="petEventTypeFilter" aria-label="Filter pet events by type">
+                <option value="All">All types</option>
+                <option value="Vet Visit">Vet Visit</option>
+                <option value="Grooming">Grooming</option>
+                <option value="Shopping">Shopping</option>
+                <option value="Playdate">Playdate</option>
+                <option value="Training">Training</option>
+                <option value="Travel">Travel</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <form id="petEventForm" class="pet-event-form">
+            <input type="hidden" id="petEventId" />
+            <div class="three-column">
+              <label>
+                <span>Event Name</span>
+                <input id="petEventName" type="text" placeholder="Pet fair, vet camp, grooming visit..." required />
+              </label>
+              <label>
+                <span>Event Type</span>
+                <select id="petEventType">
+                  <option value="Vet Visit">Vet Visit</option>
+                  <option value="Grooming">Grooming</option>
+                  <option value="Shopping">Shopping</option>
+                  <option value="Playdate">Playdate</option>
+                  <option value="Training">Training</option>
+                  <option value="Travel">Travel</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+              <label>
+                <span>Status</span>
+                <select id="petEventStatus">
+                  <option value="Upcoming">Upcoming</option>
+                  <option value="Attended">Attended</option>
+                </select>
+              </label>
+            </div>
+            <div class="three-column">
+              <label>
+                <span>Event Date</span>
+                <input id="petEventDate" type="date" required />
+              </label>
+              <label>
+                <span>Location</span>
+                <input id="petEventLocation" type="text" placeholder="Clinic, venue, city" />
+              </label>
+              <label>
+                <span>With / Organiser</span>
+                <input id="petEventWith" type="text" placeholder="Doctor, groomer, host" />
+              </label>
+            </div>
+            <label>
+              <span>Event Notes</span>
+              <textarea id="petEventNotes" rows="2" placeholder="What happened, items bought, reminder notes..."></textarea>
+            </label>
+            <div class="event-actions">
+              <button class="primary-button" type="submit" id="petEventSubmit">
+                <svg class="icon"><use href="#icon-plus"></use></svg>
+                <span>Add Event</span>
+              </button>
+              <button class="secondary-button hidden" type="button" id="petEventCancel">Cancel Edit</button>
+            </div>
+          </form>
+
+          <div class="pet-event-list" id="petEventList" aria-live="polite"></div>
+        </section>
+
+        <section class="pet-workspace">
+          <aside class="pet-profile-card">
+            <div class="pet-avatar">
+              <svg class="icon paw-icon"><use href="#icon-paw"></use></svg>
+            </div>
+            <p class="eyebrow">Pet Profile</p>
+            <h2>Mishti</h2>
+            <dl class="pet-profile-list">
+              <div>
+                <dt>Doctor</dt>
+                <dd id="petDoctorSummary">Not added</dd>
+              </div>
+              <div>
+                <dt>Hospital</dt>
+                <dd id="petHospitalSummary">Not added</dd>
+              </div>
+              <div>
+                <dt>Grooming</dt>
+                <dd id="petGroomingSummary">Not added</dd>
+              </div>
+              <div>
+                <dt>Shopping Items</dt>
+                <dd id="petShoppingSummary">Not added</dd>
+              </div>
+            </dl>
+          </aside>
+
+          <section class="pet-board">
+            <div class="board-toolbar">
+              <div>
+                <p class="eyebrow">Care Details</p>
+                <h2>Mishti Dashboard</h2>
+              </div>
+            </div>
+
+            <form id="petForm" class="pet-form">
+              <div class="pet-section">
+                <div class="section-title">
+                  <svg class="icon"><use href="#icon-heart"></use></svg>
+                  <h3>Health</h3>
+                </div>
+                <div class="three-column">
+                  <label>
+                    <span>Last Deworming</span>
+                    <input id="lastDeworming" type="date" />
+                  </label>
+                  <label>
+                    <span>Next Health Checkup</span>
+                    <input id="nextHealthCheckup" type="date" />
+                  </label>
+                  <label>
+                    <span>Last Checkup Done On</span>
+                    <input id="lastCheckupDate" type="date" />
+                  </label>
+                </div>
+                <div class="two-column">
+                  <label>
+                    <span>Doctor Name</span>
+                    <input id="doctorName" type="text" placeholder="Doctor name" />
+                  </label>
+                  <label>
+                    <span>Hospital Name</span>
+                    <input id="hospitalName" type="text" placeholder="Hospital or clinic" />
+                  </label>
+                </div>
+                <label class="file-field">
+                  <span>Upload Medical Record</span>
+                  <input id="medicalRecords" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx" />
+                </label>
+                <div class="record-list" id="medicalRecordList"></div>
+              </div>
+
+              <div class="pet-section">
+                <div class="section-title">
+                  <svg class="icon paw-icon"><use href="#icon-paw"></use></svg>
+                  <h3>Grooming</h3>
+                </div>
+                <div class="three-column">
+                  <label>
+                    <span>Last Grooming Done On</span>
+                    <input id="lastGroomingDate" type="date" />
+                  </label>
+                  <label>
+                    <span>By</span>
+                    <input id="groomingBy" type="text" placeholder="Groomer or shop" />
+                  </label>
+                  <label>
+                    <span>Location Name</span>
+                    <input id="groomingLocation" type="text" placeholder="Location" />
+                  </label>
+                </div>
+              </div>
+
+              <div class="pet-section">
+                <div class="section-title">
+                  <svg class="icon"><use href="#icon-bag"></use></svg>
+                  <h3>Shopping</h3>
+                </div>
+                <div class="two-column">
+                  <label>
+                    <span>Last Shopping Done On</span>
+                    <input id="lastShoppingDate" type="date" />
+                  </label>
+                  <label>
+                    <span>Category</span>
+                    <select id="shoppingCategory">
+                      <option value="Toys">Toys</option>
+                      <option value="Treats">Treats</option>
+                      <option value="Misc">Misc</option>
+                    </select>
+                  </label>
+                </div>
+                <label>
+                  <span>Items List</span>
+                  <textarea id="shoppingItems" rows="3" placeholder="Toys, treats, food, accessories..."></textarea>
+                </label>
+              </div>
+
+              <button class="primary-button" type="submit">
+                <svg class="icon"><use href="#icon-check"></use></svg>
+                <span>Save Mishti Details</span>
+              </button>
+            </form>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <template id="taskCardTemplate">
+      <article class="task-card">
+        <div class="card-topline">
+          <span class="priority-pill"></span>
+          <span class="followup-pill"></span>
+        </div>
+        <h3 class="task-title"></h3>
+        <dl class="task-meta"></dl>
+        <div class="govt-summary hidden"></div>
+        <p class="task-notes hidden"></p>
+        <div class="card-actions">
+          <button class="secondary-button done-button" type="button"></button>
+          <button class="secondary-button edit-button" type="button">
+            <svg class="icon"><use href="#icon-edit"></use></svg>
+            <span>Edit</span>
+          </button>
+          <button class="danger-button delete-button" type="button">
+            <svg class="icon"><use href="#icon-trash"></use></svg>
+            <span>Delete</span>
+          </button>
+        </div>
+      </article>
+    </template>
+
+    <script src="../app.js"></script>
+  </body>
+</html>
