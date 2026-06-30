@@ -970,44 +970,27 @@ async function handleAuthClick() {
     return;
   }
 
-  const email = prompt("Enter your admin email to receive OTP");
+  const email = prompt("Enter your admin email");
   if (!email) return;
+  const password = prompt("Enter your admin password");
+  if (!password) return;
 
-  setSyncStatus("Sending OTP...", "live");
-  const { error: sendError } = await supabaseClient.auth.signInWithOtp({
+  setSyncStatus("Signing in...", "live");
+  const { data, error } = await supabaseClient.auth.signInWithPassword({
     email: email.trim(),
-    options: { shouldCreateUser: true },
+    password,
   });
 
-  if (sendError) {
-    setSyncStatus("OTP failed", "error");
-    alert(sendError.message);
-    return;
-  }
-
-  const token = prompt("Enter the 6-digit OTP sent to your email");
-  if (!token) {
-    setSyncStatus("OTP sent", "live");
-    return;
-  }
-
-  setSyncStatus("Verifying OTP...", "live");
-  const { data, error: verifyError } = await supabaseClient.auth.verifyOtp({
-    email: email.trim(),
-    token: token.trim(),
-    type: "email",
-  });
-
-  if (verifyError) {
-    setSyncStatus("OTP failed", "error");
-    alert(verifyError.message);
+  if (error) {
+    setSyncStatus("Login failed", "error");
+    alert(error.message);
     return;
   }
 
   currentUser = data.user || data.session?.user || null;
   await refreshAdminMode();
   await loadCloudData();
-  alert(adminMode ? "Admin access enabled." : "Email verified, but this email is not in the admin list.");
+  alert(adminMode ? "Admin access enabled." : "Login successful, but this email is not in the admin list.");
 }
 
 function requireAdmin() {
