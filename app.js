@@ -1560,10 +1560,10 @@ function injectProductLayerStyles() {
     .account-action.hidden { display: none; }
     .owner-mode .delete-button { display: none; }
     .pet-switcher-panel { display: none; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: rgba(255,255,255,0.78); box-shadow: var(--shadow-soft); }
-    .owner-mode .pet-switcher-panel, .read-only .pet-switcher-panel { display: flex; }
+    .owner-mode .pet-switcher-panel { display: flex; }
     .pet-switcher-panel label { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
     .pet-switcher-panel select { min-height: 38px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,0.88); padding: 0 12px; }
-    .read-only .pet-switcher-panel button { display: none; }
+    .read-only .pet-switcher-panel { display: none; }
   `;
   document.head.append(style);
 }
