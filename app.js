@@ -858,9 +858,15 @@ function injectLiveStyles() {
     .system-pill.is-admin .icon { color: var(--blue); fill: currentColor; stroke: none; }
     .system-pill.is-error .icon { color: var(--red); fill: currentColor; stroke: none; }
     .read-only .task-form-panel, .read-only .pet-board, .read-only .pet-events-panel form { display: none; }
-    .read-only .workspace, .read-only .pet-workspace { grid-template-columns: 1fr; }
-    .read-only .task-board, .read-only .pet-events-panel, .read-only .pet-month-panel { min-width: 0; }
+    .read-only .workspace, .read-only .pet-workspace, .admin-quick .workspace { grid-template-columns: 1fr; }
+    .read-only .task-board, .read-only .pet-events-panel, .read-only .pet-month-panel, .admin-quick .task-board { min-width: 0; }
     .read-only .card-actions { display: none; }
+    .admin-quick .task-form-panel, .admin-quick .edit-button, .admin-quick .delete-button { display: none; }
+    .quick-followup-panel { display: grid; grid-template-columns: repeat(4, minmax(150px, 1fr)); gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+    .quick-followup-panel label { display: grid; gap: 6px; color: var(--muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .quick-followup-panel input, .quick-followup-panel select { width: 100%; min-height: 40px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,0.84); color: var(--ink); padding: 0 12px; }
+    .quick-followup-save { align-self: end; min-height: 40px; justify-content: center; }
+    @media (max-width: 860px) { .quick-followup-panel { grid-template-columns: 1fr; } }
     @media (max-width: 760px) { .topbar { align-items: flex-start; gap: 10px; } .topbar-actions { flex-wrap: wrap; justify-content: flex-end; } }
   `;
   document.head.append(style);
@@ -933,6 +939,7 @@ async function refreshAdminMode() {
   }
 
   document.body.classList.toggle("read-only", !adminMode);
+  document.body.classList.toggle("admin-quick", adminMode);
   if (authButton) {
     authButton.innerHTML = currentUser ? `${icon("user")}<span>Logout</span>` : `${icon("user")}<span>Admin Login</span>`;
   }
@@ -1132,7 +1139,75 @@ saveTasks = function saveTasksLive() {
 renderTasks = function renderTasksLive() {
   originalRenderTasks();
   document.body.classList.toggle("read-only", !adminMode);
+  document.body.classList.toggle("admin-quick", adminMode);
+  renderQuickTaskControls();
 };
+
+function renderQuickTaskControls() {
+  if (!adminMode) return;
+
+  const visibleTasks = filteredTasks();
+  taskList.querySelectorAll(".task-card").forEach((card, index) => {
+    const task = visibleTasks[index];
+    if (!task) return;
+
+    const panel = document.createElement("div");
+    panel.className = "quick-followup-panel";
+    panel.innerHTML = [
+      '<label>',
+      '<span>Status</span>',
+      '<select data-quick-field="status">',
+      '<option value="Open">Open</option>',
+      '<option value="Done">Done</option>',
+      '</select>',
+      '</label>',
+      '<label>',
+      '<span>Next Follow-up</span>',
+      '<input data-quick-field="nextFollowupDate" type="date" />',
+      '</label>',
+      '<label>',
+      '<span>Last Via</span>',
+      '<select data-quick-field="lastFollowupVia">',
+      '<option value="Call">Call</option>',
+      '<option value="Message">Message</option>',
+      '<option value="Email">Email</option>',
+      '<option value="Not Done">Not Done</option>',
+      '</select>',
+      '</label>',
+      '<button class="secondary-button quick-followup-save" type="button">' + icon("check") + '<span>Update</span></button>',
+    ].join("");
+
+    panel.querySelector('[data-quick-field="status"]').value = task.status || "Open";
+    panel.querySelector('[data-quick-field="nextFollowupDate"]').value = task.nextFollowupDate || "";
+    panel.querySelector('[data-quick-field="lastFollowupVia"]').value = task.lastFollowupVia || "Not Done";
+    panel.querySelector(".quick-followup-save").addEventListener("click", () => saveQuickTaskUpdate(task.id, panel));
+    card.append(panel);
+  });
+}
+
+async function saveQuickTaskUpdate(id, panel) {
+  if (!requireAdmin()) return;
+  const task = tasks.find((item) => item.id === id);
+  if (!task) return;
+
+  const updatedTask = {
+    ...task,
+    status: panel.querySelector('[data-quick-field="status"]').value,
+    nextFollowupDate: panel.querySelector('[data-quick-field="nextFollowupDate"]').value,
+    lastFollowupVia: panel.querySelector('[data-quick-field="lastFollowupVia"]').value,
+    updatedAt: new Date().toISOString(),
+  };
+
+  try {
+    const saved = await saveCloudTask(updatedTask);
+    tasks = tasks.map((item) => (item.id === id ? saved : item));
+    saveTasks();
+    renderTasks();
+    setSyncStatus("Task updated", "admin");
+  } catch (error) {
+    alert(error.message);
+  }
+}
 
 toggleDone = async function toggleDoneLive(id) {
   if (!requireAdmin()) return;
