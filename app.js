@@ -271,10 +271,10 @@ function renderPetDashboard() {
   petDewormingCountdown.textContent = getDewormingCountdown(nextDewormingDate);
   petLastShopping.textContent = petData.lastShoppingDate ? formatDate(petData.lastShoppingDate) : "Not set";
   petUpcomingEvent.textContent = getNextPetEvent()?.name || "Not set";
-  petDoctorSummary.textContent = petData.doctorName || "Not added";
-  petHospitalSummary.textContent = petData.hospitalName || "Not added";
-  petGroomingSummary.textContent = [petData.groomingBy, petData.groomingLocation].filter(Boolean).join(" · ") || "Not added";
-  petShoppingSummary.textContent = petData.shoppingItems || "Not added";
+  petDoctorSummary.textContent = summaryWithMonth(petData.doctorName, petData.lastCheckupDate);
+  petHospitalSummary.textContent = summaryWithMonth(petData.hospitalName, petData.lastCheckupDate);
+  petGroomingSummary.textContent = summaryWithMonth([petData.groomingBy, petData.groomingLocation].filter(Boolean).join(" · "), petData.lastGroomingDate);
+  petShoppingSummary.textContent = summaryWithMonth(petData.shoppingItems, petData.lastShoppingDate);
   renderMedicalRecords();
   renderPetMonthEvents();
   renderPetEvents();
@@ -517,6 +517,20 @@ function markPetEventAttended(id) {
 function deletePetEvent(id) {
   savePetEvents((petData.events || []).filter((item) => item.id !== id));
   if (petEventId.value === id) resetPetEventForm();
+}
+
+function formatMonthYear(dateString) {
+  if (!dateString) return "date not set";
+  return new Intl.DateTimeFormat("en-IN", {
+    month: "short",
+    year: "numeric",
+  }).format(new Date(`${dateString}T00:00:00`));
+}
+
+function summaryWithMonth(value, dateString) {
+  const cleanValue = typeof value === "string" ? value.trim() : "";
+  if (!cleanValue) return "Not added";
+  return `${cleanValue} (${formatMonthYear(dateString)})`;
 }
 
 function formatDate(dateString) {
