@@ -45,3 +45,15 @@ This repo is ready for GitHub Pages from the `main` branch root.
 ## Admin Login
 
 The live app uses Supabase email + password login for admin access, avoiding Supabase email OTP rate limits. The app unlocks editing only when the authenticated user exists in `public.admin_users`.
+
+## Product MVP Architecture
+
+The app is now moving from single-owner mode to product mode:
+
+- Users can create their own Notes & Paws account.
+- Signed-in users manage their own task and pet records through Supabase ownership rules.
+- Users can add multiple pets and switch between pet dashboards.
+- Users can create private share links with scope and expiry.
+- Vikash's account remains master admin and can see platform-level totals.
+
+Current implementation is still MVP-level: account creation, pet switching, and share-link creation are functional foundations for testing with friends. A richer master admin user list, recipient-specific invites, and polished multi-user onboarding are the next iteration.

@@ -1005,9 +1005,9 @@ async function handleAuthClick() {
     return;
   }
 
-  const email = prompt("Enter your admin email");
+  const email = prompt("Enter your email");
   if (!email) return;
-  const password = prompt("Enter your admin password");
+  const password = prompt("Enter your password");
   if (!password) return;
 
   setSyncStatus("Signing in...", "live");
@@ -1025,7 +1025,7 @@ async function handleAuthClick() {
   currentUser = data.user || data.session?.user || null;
   await refreshAdminMode();
   await loadCloudData();
-  alert(adminMode ? "Admin access enabled." : "Login successful, but this email is not in the admin list.");
+  alert(adminMode ? "Workspace access enabled." : "Login successful, but this email is not in the admin list.");
 }
 
 function requireAdmin() {
@@ -1497,3 +1497,342 @@ medicalRecords.addEventListener("change", async (event) => {
 }, true);
 
 initializeCloud();
+
+// Multi-user product layer: accounts, owner workspaces, multi-pet selector, and private share links.
+let productLayerReady = false;
+let ownerMode = false;
+let manageMode = false;
+let currentProfile = null;
+let signupButton = null;
+let manageButton = null;
+let shareButton = null;
+let petSwitcherPanel = null;
+let petSelector = null;
+let addPetButton = null;
+
+const baseRefreshAdminMode = refreshAdminMode;
+const baseLoadCloudData = loadCloudData;
+const baseFromDbTask = fromDbTask;
+const baseToDbTask = toDbTask;
+
+function setupProductLayer() {
+  if (productLayerReady) return;
+  productLayerReady = true;
+  injectProductLayerStyles();
+  setupProductAccountControls();
+  setupProductPetSwitcher();
+}
+
+function injectProductLayerStyles() {
+  const style = document.createElement("style");
+  style.textContent = `
+    .account-action.hidden { display: none; }
+    .owner-mode .delete-button { display: none; }
+    .pet-switcher-panel { display: none; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: rgba(255,255,255,0.78); box-shadow: var(--shadow-soft); }
+    .owner-mode .pet-switcher-panel, .read-only .pet-switcher-panel { display: flex; }
+    .pet-switcher-panel label { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .pet-switcher-panel select { min-height: 38px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,0.88); padding: 0 12px; }
+    .read-only .pet-switcher-panel button { display: none; }
+  `;
+  document.head.append(style);
+}
+
+function setupProductAccountControls() {
+  const actions = document.querySelector(".topbar-actions");
+  if (!actions || signupButton) return;
+
+  signupButton = document.createElement("button");
+  signupButton.className = "view-toggle account-action";
+  signupButton.type = "button";
+  signupButton.innerHTML = `${icon("plus")}<span>Create Account</span>`;
+  signupButton.addEventListener("click", handleSignupClick);
+
+  manageButton = document.createElement("button");
+  manageButton.className = "view-toggle account-action hidden";
+  manageButton.type = "button";
+  manageButton.innerHTML = `${icon("edit")}<span>Manage</span>`;
+  manageButton.addEventListener("click", toggleManageMode);
+
+  shareButton = document.createElement("button");
+  shareButton.className = "view-toggle account-action hidden";
+  shareButton.type = "button";
+  shareButton.innerHTML = `${icon("layers")}<span>Share</span>`;
+  shareButton.addEventListener("click", createShareLink);
+
+  actions.insertBefore(signupButton, authButton);
+  actions.insertBefore(manageButton, authButton);
+  actions.insertBefore(shareButton, authButton);
+}
+
+function setupProductPetSwitcher() {
+  const petHero = document.querySelector(".pet-hero");
+  if (!petHero || petSwitcherPanel) return;
+  petSwitcherPanel = document.createElement("section");
+  petSwitcherPanel.className = "pet-switcher-panel";
+  petSwitcherPanel.innerHTML = [
+    '<label><span>Pet</span><select id="petSelector"></select></label>',
+    '<button class="secondary-button" type="button" id="addPetButton">' + icon("plus") + '<span>Add Pet</span></button>',
+  ].join("");
+  petHero.insertAdjacentElement("afterend", petSwitcherPanel);
+  petSelector = petSwitcherPanel.querySelector("#petSelector");
+  addPetButton = petSwitcherPanel.querySelector("#addPetButton");
+  petSelector.addEventListener("change", async () => {
+    petData = normalizePetData({ ...petData, petId: petSelector.value });
+    await loadCloudPetData();
+    fillPetForm();
+  });
+  addPetButton.addEventListener("click", addPetForCurrentUser);
+}
+
+refreshAdminMode = async function refreshAdminModeProduct() {
+  setupProductLayer();
+  adminMode = false;
+  ownerMode = Boolean(currentUser);
+
+  if (currentUser && supabaseClient) {
+    await ensureProfile();
+    const { data, error } = await supabaseClient.rpc("is_admin");
+    adminMode = !error && data === true;
+  } else {
+    currentProfile = null;
+    manageMode = false;
+  }
+
+  document.body.classList.toggle("owner-mode", ownerMode);
+  document.body.classList.toggle("read-only", !ownerMode);
+  document.body.classList.toggle("admin-quick", ownerMode && !manageMode);
+  document.body.classList.toggle("manage-mode", ownerMode && manageMode);
+
+  if (authButton) {
+    authButton.innerHTML = currentUser ? `${icon("user")}<span>Logout</span>` : `${icon("user")}<span>Login</span>`;
+  }
+  if (signupButton) signupButton.classList.toggle("hidden", ownerMode);
+  if (manageButton) {
+    manageButton.classList.toggle("hidden", !ownerMode);
+    manageButton.innerHTML = manageMode ? `${icon("check")}<span>Quick View</span>` : `${icon("edit")}<span>Manage</span>`;
+  }
+  if (shareButton) shareButton.classList.toggle("hidden", !ownerMode);
+  if (masterAdminPanel) masterAdminPanel.classList.toggle("visible", adminMode);
+
+  if (adminMode) setSyncStatus("Master admin", "admin");
+  else if (ownerMode) setSyncStatus("My workspace", "admin");
+  else setSyncStatus("Private by default", "live");
+};
+
+loadCloudData = async function loadCloudDataProduct() {
+  if (!cloudReady) return;
+  setupProductLayer();
+  if (currentUser) await ensureProfile();
+  await Promise.all([loadCloudTasks(), loadCloudPetData()]);
+  if (adminMode) await loadMasterAdminDashboard();
+  renderTasks();
+  fillPetForm();
+};
+
+fromDbTask = function fromDbTaskProduct(row) {
+  return {
+    ...baseFromDbTask(row),
+    ownerId: row.owner_id,
+  };
+};
+
+toDbTask = function toDbTaskProduct(task) {
+  return {
+    ...baseToDbTask(task),
+    owner_id: task.ownerId || currentUser?.id || null,
+  };
+};
+
+const baseHandleAuthClick = handleAuthClick;
+handleAuthClick = async function handleAuthClickProduct() {
+  if (!supabaseClient) return;
+  if (currentUser) {
+    await supabaseClient.auth.signOut();
+    return;
+  }
+
+  const email = prompt("Enter your email");
+  if (!email) return;
+  const password = prompt("Enter your password");
+  if (!password) return;
+
+  setSyncStatus("Signing in...", "live");
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email: email.trim(), password });
+  if (error) {
+    setSyncStatus("Login failed", "error");
+    alert(error.message);
+    return;
+  }
+
+  currentUser = data.user || data.session?.user || null;
+  await refreshAdminMode();
+  await loadCloudData();
+  alert(adminMode ? "Master admin access enabled." : "Your workspace is ready.");
+};
+
+function requireAdmin() {
+  if (ownerMode) return true;
+  alert("Please log in to manage your Notes & Paws workspace.");
+  return false;
+}
+
+async function handleSignupClick() {
+  if (!supabaseClient || currentUser) return;
+  const email = prompt("Enter email for the new Notes & Paws account");
+  if (!email) return;
+  const password = prompt("Create a password with at least 6 characters");
+  if (!password) return;
+  const displayName = prompt("Display name") || email.split("@")[0];
+
+  setSyncStatus("Creating account...", "live");
+  const { data, error } = await supabaseClient.auth.signUp({
+    email: email.trim(),
+    password,
+    options: { data: { display_name: displayName.trim() } },
+  });
+
+  if (error) {
+    setSyncStatus("Signup failed", "error");
+    alert(error.message);
+    return;
+  }
+
+  currentUser = data.user || data.session?.user || null;
+  if (!currentUser) {
+    alert("Account created. If Supabase asks for email confirmation, confirm once and then log in.");
+    setSyncStatus("Check email", "live");
+    return;
+  }
+
+  await ensureProfile(displayName.trim());
+  await refreshAdminMode();
+  await loadCloudData();
+  alert("Your Notes & Paws workspace is ready.");
+}
+
+function toggleManageMode() {
+  if (!ownerMode) return;
+  manageMode = !manageMode;
+  refreshAdminMode();
+  renderTasks();
+}
+
+async function ensureProfile(displayName = "") {
+  if (!currentUser || !supabaseClient) return null;
+  const { data: existing } = await supabaseClient.from("profiles").select("*").eq("user_id", currentUser.id).maybeSingle();
+  if (existing) {
+    currentProfile = existing;
+    return existing;
+  }
+
+  const baseName = displayName || currentUser.user_metadata?.display_name || currentUser.email?.split("@")[0] || "User";
+  const slugBase = baseName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 36) || "user";
+  const { data, error } = await supabaseClient.from("profiles").insert({
+    user_id: currentUser.id,
+    email: currentUser.email,
+    display_name: baseName,
+    public_slug: `${slugBase}-${currentUser.id.slice(0, 6)}`,
+  }).select("*").single();
+  if (error) throw error;
+  currentProfile = data;
+  return data;
+}
+
+async function createShareLink() {
+  if (!requireAdmin()) return;
+  const scope = prompt("Share what? Type: all, personal, or pet", "all");
+  if (!scope || !["all", "personal", "pet"].includes(scope)) return alert("Use all, personal, or pet.");
+  const daysValue = Number(prompt("Expire after how many days?", "7"));
+  const days = Number.isFinite(daysValue) && daysValue > 0 ? daysValue : 7;
+  const token = crypto.randomUUID().replaceAll("-", "") + crypto.randomUUID().slice(0, 8);
+  const expiresAt = new Date(Date.now() + days * 86400000).toISOString();
+  const { error } = await supabaseClient.from("share_links").insert({
+    owner_id: currentUser.id,
+    token,
+    scope,
+    pet_id: scope === "pet" ? (petData.petId || null) : null,
+    label: scope === "pet" ? "Pet dashboard" : scope === "personal" ? "Personal dashboard" : "Full dashboard",
+    expires_at: expiresAt,
+  });
+  if (error) return alert(error.message);
+  const link = `${location.origin}${location.pathname}?share=${token}`;
+  await navigator.clipboard?.writeText(link).catch(() => {});
+  alert(`Private share link copied/created. It expires in ${days} day(s):\n${link}`);
+}
+
+loadCloudTasks = async function loadCloudTasksProduct() {
+  const table = currentUser ? "tasks" : "public_tasks";
+  const { data, error } = await supabaseClient.from(table).select("*").order("next_followup_date", { ascending: true, nullsFirst: false });
+  if (error) {
+    console.error(error);
+    setSyncStatus("Sync issue", "error");
+    return;
+  }
+  tasks = (data || []).map(fromDbTask);
+  localStorage.setItem(storageKey, JSON.stringify(tasks));
+};
+
+async function loadPetsForCurrentContext() {
+  if (!supabaseClient) return [];
+  const { data, error } = await supabaseClient.from("pets").select("id,name,breed,species,is_public,owner_id,created_at").order("created_at", { ascending: true });
+  if (error) {
+    console.error(error);
+    return [];
+  }
+  return data || [];
+}
+
+function renderPetSelector(pets) {
+  if (!petSelector) return;
+  petSelector.innerHTML = "";
+  pets.forEach((pet) => {
+    const option = document.createElement("option");
+    option.value = pet.id;
+    option.textContent = [pet.name, pet.species].filter(Boolean).join(" · ");
+    petSelector.append(option);
+  });
+  if (petData.petId) petSelector.value = petData.petId;
+}
+
+ensureMishtiPet = async function ensureActivePetProduct() {
+  let pets = await loadPetsForCurrentContext();
+  if (!pets.length && ownerMode) {
+    const { data: inserted, error } = await supabaseClient.from("pets").insert({
+      name: currentUser.email === "vikash.mohanta@rediffmail.com" ? "Mishti" : "My Pet",
+      breed: currentUser.email === "vikash.mohanta@rediffmail.com" ? "Shih Tzu" : null,
+      species: "Dog",
+      owner_id: currentUser.id,
+      is_public: true,
+    }).select("id,name,breed,species,is_public,owner_id,created_at").single();
+    if (error) throw error;
+    pets = [inserted];
+  }
+
+  if (!pets.length) return null;
+  const selected = pets.find((pet) => pet.id === petData.petId) || pets[0];
+  petData = normalizePetData({ ...petData, petId: selected.id });
+  renderPetSelector(pets);
+  return selected.id;
+};
+
+async function addPetForCurrentUser() {
+  if (!requireAdmin()) return;
+  const name = prompt("Pet name");
+  if (!name) return;
+  const speciesInput = prompt("Species: Dog, Cat, or Other", "Dog") || "Dog";
+  const species = ["Dog", "Cat", "Other"].includes(speciesInput) ? speciesInput : "Other";
+  const breed = prompt("Breed (optional)") || "";
+  const { data, error } = await supabaseClient.from("pets").insert({
+    name: name.trim(),
+    species,
+    breed: breed.trim() || null,
+    owner_id: currentUser.id,
+    is_public: true,
+  }).select("id").single();
+  if (error) return alert(error.message);
+  petData = normalizePetData({ petId: data.id, selectedMonth: currentMonthValue(), events: [], medicalRecords: [] });
+  await loadCloudPetData();
+  fillPetForm();
+}
+
+setupProductLayer();
