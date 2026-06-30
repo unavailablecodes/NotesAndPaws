@@ -861,6 +861,9 @@ let currentUser = null;
 let adminMode = false;
 let authButton = null;
 let syncStatus = null;
+let masterAdminPanel = null;
+let masterAdminList = null;
+let masterAdminStats = null;
 const originalRenderTasks = renderTasks;
 
 function injectLiveStyles() {
@@ -880,6 +883,18 @@ function injectLiveStyles() {
     .quick-followup-panel label { display: grid; gap: 6px; color: var(--muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
     .quick-followup-panel input, .quick-followup-panel select { width: 100%; min-height: 40px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,0.84); color: var(--ink); padding: 0 12px; }
     .quick-followup-save { align-self: end; min-height: 40px; justify-content: center; }
+    .master-admin-panel { display: none; margin: 0 0 18px; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: rgba(255,255,255,0.82); box-shadow: var(--shadow-soft); }
+    .master-admin-panel.visible { display: block; }
+    .master-admin-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .master-admin-grid { display: grid; grid-template-columns: repeat(5, minmax(120px, 1fr)); gap: 10px; margin-bottom: 14px; }
+    .master-stat { padding: 13px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: rgba(255,255,255,0.7); }
+    .master-stat span { display: block; color: var(--muted); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+    .master-stat strong { display: block; margin-top: 5px; font-size: 1.35rem; }
+    .master-admin-list { display: grid; gap: 8px; }
+    .master-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: rgba(255,255,255,0.68); }
+    .master-row strong, .master-row span { min-width: 0; overflow-wrap: anywhere; }
+    .master-row span, .master-row small { color: var(--muted); }
+    @media (max-width: 920px) { .master-admin-grid { grid-template-columns: repeat(2, minmax(120px, 1fr)); } .master-row { grid-template-columns: 1fr; } }
     @media (max-width: 860px) { .quick-followup-panel { grid-template-columns: 1fr; } }
     @media (max-width: 760px) { .topbar { align-items: flex-start; gap: 10px; } .topbar-actions { flex-wrap: wrap; justify-content: flex-end; } }
   `;
@@ -903,6 +918,24 @@ function setupLiveControls() {
 
   topbar.append(actions);
   actions.append(syncStatus, authButton, viewToggle);
+  setupMasterAdminPanel(topbar);
+}
+
+function setupMasterAdminPanel(topbar) {
+  masterAdminPanel = document.createElement("section");
+  masterAdminPanel.className = "master-admin-panel";
+  masterAdminPanel.innerHTML = [
+    '<div class="master-admin-head">',
+    '<div><p class="eyebrow">Master Admin</p><h2>Platform Overview</h2></div>',
+    '<button class="secondary-button" type="button" id="masterRefreshButton">' + icon("clock") + '<span>Refresh</span></button>',
+    '</div>',
+    '<div class="master-admin-grid" id="masterAdminStats"></div>',
+    '<div class="master-admin-list" id="masterAdminList"></div>',
+  ].join("");
+  topbar.insertAdjacentElement("afterend", masterAdminPanel);
+  masterAdminStats = masterAdminPanel.querySelector("#masterAdminStats");
+  masterAdminList = masterAdminPanel.querySelector("#masterAdminList");
+  masterAdminPanel.querySelector("#masterRefreshButton").addEventListener("click", loadMasterAdminDashboard);
 }
 
 function loadSupabaseLibrary() {
@@ -957,6 +990,8 @@ async function refreshAdminMode() {
   if (authButton) {
     authButton.innerHTML = currentUser ? `${icon("user")}<span>Logout</span>` : `${icon("user")}<span>Admin Login</span>`;
   }
+
+  if (masterAdminPanel) masterAdminPanel.classList.toggle("visible", adminMode);
 
   if (adminMode) setSyncStatus("Live admin", "admin");
   else if (currentUser) setSyncStatus("Signed in, view only", "live");
@@ -1048,10 +1083,93 @@ function toDbTask(task) {
 async function loadCloudData() {
   if (!cloudReady) return;
   await Promise.all([loadCloudTasks(), loadCloudPetData()]);
+  if (adminMode) await loadMasterAdminDashboard();
   renderTasks();
   fillPetForm();
 }
 
+async function getTableCount(table) {
+  const { count, error } = await supabaseClient.from(table).select("id", { count: "exact", head: true });
+  if (error) throw error;
+  return count || 0;
+}
+
+function renderMasterStat(label, value) {
+  return '<article class="master-stat"><span>' + escapeHtml(label) + '</span><strong>' + escapeHtml(value) + '</strong></article>';
+}
+
+function renderMasterRow(title, detail, badge) {
+  return [
+    '<article class="master-row">',
+    '<div><strong>' + escapeHtml(title) + '</strong><br><span>' + escapeHtml(detail) + '</span></div>',
+    '<small>' + escapeHtml(badge) + '</small>',
+    '</article>',
+  ].join("");
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+async function loadMasterAdminDashboard() {
+  if (!adminMode || !masterAdminPanel) return;
+  masterAdminStats.innerHTML = renderMasterStat("Loading", "...");
+  masterAdminList.innerHTML = "";
+
+  try {
+    const [taskCount, petCount, eventCount, recordCount, openTasks, recentTasks, recentPets, recentEvents] = await Promise.all([
+      getTableCount("tasks"),
+      getTableCount("pets"),
+      getTableCount("pet_events"),
+      getTableCount("medical_records"),
+      supabaseClient.from("tasks").select("id", { count: "exact", head: true }).eq("status", "Open"),
+      supabaseClient.from("tasks").select("title,status,priority,workstream,next_followup_date,updated_at").order("updated_at", { ascending: false }).limit(5),
+      supabaseClient.from("pets").select("name,breed,updated_at,created_at").order("updated_at", { ascending: false, nullsFirst: false }).limit(5),
+      supabaseClient.from("pet_events").select("name,status,type,event_date,updated_at").order("event_date", { ascending: false }).limit(5),
+    ]);
+
+    if (openTasks.error || recentTasks.error || recentPets.error || recentEvents.error) {
+      throw openTasks.error || recentTasks.error || recentPets.error || recentEvents.error;
+    }
+
+    masterAdminStats.innerHTML = [
+      renderMasterStat("Tasks", taskCount),
+      renderMasterStat("Open", openTasks.count || 0),
+      renderMasterStat("Pets", petCount),
+      renderMasterStat("Events", eventCount),
+      renderMasterStat("Records", recordCount),
+    ].join("");
+
+    const rows = [
+      ...(recentTasks.data || []).map((task) => renderMasterRow(
+        task.title,
+        [task.workstream, task.priority, task.next_followup_date ? "Follow-up " + formatDate(task.next_followup_date) : "No follow-up"].filter(Boolean).join(" · "),
+        "Task · " + task.status,
+      )),
+      ...(recentPets.data || []).map((pet) => renderMasterRow(
+        pet.name,
+        pet.breed || "Breed not set",
+        "Pet",
+      )),
+      ...(recentEvents.data || []).map((event) => renderMasterRow(
+        event.name,
+        [event.type, event.event_date ? formatDate(event.event_date) : "No date"].filter(Boolean).join(" · "),
+        "Event · " + event.status,
+      )),
+    ];
+
+    masterAdminList.innerHTML = rows.length ? rows.join("") : '<p class="month-empty">No platform activity yet.</p>';
+  } catch (error) {
+    console.error(error);
+    masterAdminStats.innerHTML = renderMasterStat("Error", "!");
+    masterAdminList.innerHTML = '<p class="month-empty">Master admin data could not be loaded.</p>';
+  }
+}
 async function loadCloudTasks() {
   const table = adminMode ? "tasks" : "public_tasks";
   const { data, error } = await supabaseClient.from(table).select("*").order("next_followup_date", { ascending: true, nullsFirst: false });
