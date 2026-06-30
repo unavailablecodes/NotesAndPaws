@@ -234,8 +234,8 @@ function renderPersonalModeToggle() {
   personalModeToggle.setAttribute("aria-pressed", String(personalEnabled));
   personalModeToggle.setAttribute("title", personalEnabled ? "Hide personal task dashboard" : "Show personal task dashboard");
   personalModeToggle.innerHTML = personalEnabled
-    ? `${icon("layers")}<span>Personal On</span>`
-    : `${icon("paw")}<span>Pet Only</span>`;
+    ? `${icon("layers")}<span>Personal</span><b>On</b>`
+    : `${icon("paw")}<span>Personal</span><b>Off</b>`;
   viewToggle.classList.toggle("hidden", !personalEnabled);
 }
 
