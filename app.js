@@ -1836,3 +1836,74 @@ async function addPetForCurrentUser() {
 }
 
 setupProductLayer();
+
+// Private share-link viewer layer.
+let activeShareToken = new URLSearchParams(location.search).get("share");
+const productLoadCloudData = loadCloudData;
+
+loadCloudData = async function loadCloudDataWithShare() {
+  if (activeShareToken && !currentUser) {
+    await loadSharedDashboard(activeShareToken);
+    return;
+  }
+  await productLoadCloudData();
+};
+
+async function loadSharedDashboard(token) {
+  if (!cloudReady || !supabaseClient) return;
+  setupProductLayer();
+  const { data, error } = await supabaseClient.rpc("share_payload", { share_token: token });
+  if (error || !data?.valid) {
+    tasks = [];
+    petData = normalizePetData({ events: [], medicalRecords: [] });
+    setSyncStatus("Share expired", "error");
+    renderTasks();
+    fillPetForm();
+    return;
+  }
+
+  ownerMode = false;
+  adminMode = false;
+  manageMode = false;
+  document.body.classList.add("read-only");
+  document.body.classList.remove("owner-mode", "admin-quick", "manage-mode");
+  setSyncStatus("Private shared view", "live");
+
+  tasks = (data.tasks || []).map(fromDbTask);
+  const pets = data.pets || [];
+  renderPetSelector(pets);
+  const selectedPet = pets[0];
+  const health = (data.pet_health || []).find((item) => item.pet_id === selectedPet?.id) || {};
+  const grooming = (data.pet_grooming || []).filter((item) => item.pet_id === selectedPet?.id).sort((a, b) => new Date(b.grooming_date) - new Date(a.grooming_date))[0] || {};
+  const shopping = (data.pet_shopping || []).filter((item) => item.pet_id === selectedPet?.id).sort((a, b) => new Date(b.shopping_date) - new Date(a.shopping_date))[0] || {};
+
+  petData = normalizePetData({
+    petId: selectedPet?.id,
+    lastDeworming: health.last_deworming || "",
+    nextHealthCheckup: health.next_health_checkup || "",
+    lastCheckupDate: health.last_checkup_date || "",
+    doctorName: health.doctor_name || "",
+    hospitalName: health.hospital_name || "",
+    lastGroomingDate: grooming.grooming_date || "",
+    groomingBy: grooming.groomer_name || "",
+    groomingLocation: grooming.location_name || "",
+    lastShoppingDate: shopping.shopping_date || "",
+    shoppingCategory: shopping.category || "Toys",
+    shoppingItems: shopping.items || "",
+    events: (data.pet_events || []).map((event) => ({
+      id: event.id,
+      name: event.name,
+      type: event.type,
+      status: event.status,
+      date: event.event_date,
+      location: event.location || "",
+      withWhom: event.with_whom || "",
+      notes: event.notes || "",
+    })),
+    medicalRecords: [],
+    selectedMonth: currentMonthValue(),
+  });
+
+  renderTasks();
+  fillPetForm();
+}
