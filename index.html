@@ -90,10 +90,16 @@
           <span aria-hidden="true"></span>
           <strong>Notes & Paws</strong>
         </div>
-        <button class="view-toggle" id="viewToggle" type="button" aria-pressed="false" title="Open Mishti dashboard">
-          <svg class="icon paw-icon"><use href="#icon-paw"></use></svg>
-          <span>Mishti</span>
-        </button>
+        <div class="topbar-controls">
+          <button class="personal-mode-toggle" id="personalModeToggle" type="button" aria-pressed="true" title="Hide personal task dashboard">
+            <svg class="icon"><use href="#icon-layers"></use></svg>
+            <span>Personal On</span>
+          </button>
+          <button class="view-toggle" id="viewToggle" type="button" aria-pressed="false" title="Open Mishti dashboard">
+            <svg class="icon paw-icon"><use href="#icon-paw"></use></svg>
+            <span>Mishti</span>
+          </button>
+        </div>
       </nav>
 
       <section class="dashboard-view" id="personalDashboard">

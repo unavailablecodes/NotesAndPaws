@@ -1,6 +1,7 @@
 const storageKey = "personal-task-dashboard-v1";
 const quoteStorageKey = "personal-task-dashboard-daily-quote-v1";
 const petStorageKey = "mishti-pet-dashboard-v1";
+const personalModeStorageKey = "notes-and-paws-personal-enabled-v1";
 const userName = "Vikash";
 const dailyQuotes = [
   "Small steps, clearly followed.",
@@ -59,6 +60,7 @@ const highPriorityTasks = document.querySelector("#highPriorityTasks");
 const welcomeLine = document.querySelector("#welcomeLine");
 const dailyQuote = document.querySelector("#dailyQuote");
 const viewToggle = document.querySelector("#viewToggle");
+const personalModeToggle = document.querySelector("#personalModeToggle");
 const personalDashboard = document.querySelector("#personalDashboard");
 const petDashboard = document.querySelector("#petDashboard");
 const petForm = document.querySelector("#petForm");
@@ -104,6 +106,7 @@ const petEventList = document.querySelector("#petEventList");
 let tasks = loadTasks();
 let activeStatus = "Open";
 let activeView = "personal";
+let personalEnabled = loadPersonalPreference();
 let petData = loadPetData();
 
 function icon(name) {
@@ -218,15 +221,34 @@ function savePetData() {
   localStorage.setItem(petStorageKey, JSON.stringify(petData));
 }
 
+function loadPersonalPreference() {
+  return localStorage.getItem(personalModeStorageKey) !== "off";
+}
+
+function savePersonalPreference() {
+  localStorage.setItem(personalModeStorageKey, personalEnabled ? "on" : "off");
+}
+
+function renderPersonalModeToggle() {
+  if (!personalModeToggle) return;
+  personalModeToggle.setAttribute("aria-pressed", String(personalEnabled));
+  personalModeToggle.setAttribute("title", personalEnabled ? "Hide personal task dashboard" : "Show personal task dashboard");
+  personalModeToggle.innerHTML = personalEnabled
+    ? `${icon("layers")}<span>Personal On</span>`
+    : `${icon("paw")}<span>Pet Only</span>`;
+  viewToggle.classList.toggle("hidden", !personalEnabled);
+}
+
 function switchDashboard(view) {
-  activeView = view;
+  activeView = personalEnabled ? view : "pet";
   const showingPet = activeView === "pet";
 
-  personalDashboard.classList.toggle("hidden", showingPet);
+  personalDashboard.classList.toggle("hidden", showingPet || !personalEnabled);
   petDashboard.classList.toggle("hidden", !showingPet);
   viewToggle.setAttribute("aria-pressed", String(showingPet));
   viewToggle.setAttribute("title", showingPet ? "Open personal dashboard" : "Open Mishti dashboard");
   viewToggle.innerHTML = showingPet ? `${icon("user")}<span>Personal</span>` : `${icon("paw")}<span>Mishti</span>`;
+  renderPersonalModeToggle();
 }
 
 function getPetFormData() {
@@ -786,7 +808,14 @@ document.querySelectorAll(".tab").forEach((tab) => {
 });
 
 viewToggle.addEventListener("click", () => {
+  if (!personalEnabled) return;
   switchDashboard(activeView === "personal" ? "pet" : "personal");
+});
+
+personalModeToggle?.addEventListener("click", () => {
+  personalEnabled = !personalEnabled;
+  savePersonalPreference();
+  switchDashboard(personalEnabled ? "personal" : "pet");
 });
 
 petForm.addEventListener("submit", (event) => {
@@ -846,7 +875,7 @@ resetForm();
 resetPetEventForm();
 renderGreeting();
 fillPetForm();
-switchDashboard("personal");
+switchDashboard(personalEnabled ? "personal" : "pet");
 renderTasks();
 
 // Notes & Paws live Supabase layer

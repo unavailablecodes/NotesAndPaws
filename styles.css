@@ -91,6 +91,8 @@ button {
 
 .brand-mark,
 .system-pill,
+.topbar-controls,
+.personal-mode-toggle,
 .view-toggle {
   display: inline-flex;
   align-items: center;
@@ -135,6 +137,12 @@ button {
   stroke-width: 0;
 }
 
+.topbar-controls {
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.personal-mode-toggle,
 .view-toggle {
   min-height: 40px;
   padding: 0 15px;
@@ -151,9 +159,16 @@ button {
     transform 180ms ease;
 }
 
+.personal-mode-toggle:hover,
 .view-toggle:hover {
   background: rgba(255, 255, 255, 0.96);
   transform: translateY(-1px);
+}
+
+.personal-mode-toggle[aria-pressed="false"] {
+  border-color: rgba(139, 95, 69, 0.2);
+  background: rgba(255, 250, 246, 0.82);
+  color: #7a513d;
 }
 
 .view-toggle[aria-pressed="true"] {
@@ -164,9 +179,14 @@ button {
   color: #fffaf6;
 }
 
+.personal-mode-toggle .icon,
 .view-toggle .icon {
   width: 18px;
   height: 18px;
+}
+
+.view-toggle.hidden {
+  display: none;
 }
 
 .view-toggle[aria-pressed="false"] .icon {
@@ -1265,6 +1285,17 @@ textarea:focus {
 
   .topbar {
     min-height: 48px;
+  }
+
+  .topbar-controls {
+    gap: 8px;
+  }
+
+  .personal-mode-toggle,
+  .view-toggle {
+    min-height: 38px;
+    padding: 0 11px;
+    font-size: 0.76rem;
   }
 
   .system-pill {
