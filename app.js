@@ -948,17 +948,44 @@ async function handleAuthClick() {
     return;
   }
 
-  const email = prompt("Enter your admin email for Notes & Paws");
+  const email = prompt("Enter your admin email to receive OTP");
   if (!email) return;
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: window.location.href.split("#")[0] },
+
+  setSyncStatus("Sending OTP...", "live");
+  const { error: sendError } = await supabaseClient.auth.signInWithOtp({
+    email: email.trim(),
+    options: { shouldCreateUser: true },
   });
-  if (error) {
-    alert(error.message);
+
+  if (sendError) {
+    setSyncStatus("OTP failed", "error");
+    alert(sendError.message);
     return;
   }
-  alert("Magic login link sent. After opening it, add this email as admin in Supabase once, then refresh.");
+
+  const token = prompt("Enter the 6-digit OTP sent to your email");
+  if (!token) {
+    setSyncStatus("OTP sent", "live");
+    return;
+  }
+
+  setSyncStatus("Verifying OTP...", "live");
+  const { data, error: verifyError } = await supabaseClient.auth.verifyOtp({
+    email: email.trim(),
+    token: token.trim(),
+    type: "email",
+  });
+
+  if (verifyError) {
+    setSyncStatus("OTP failed", "error");
+    alert(verifyError.message);
+    return;
+  }
+
+  currentUser = data.user || data.session?.user || null;
+  await refreshAdminMode();
+  await loadCloudData();
+  alert(adminMode ? "Admin access enabled." : "Email verified, but this email is not in the admin list.");
 }
 
 function requireAdmin() {

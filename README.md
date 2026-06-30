@@ -40,3 +40,8 @@ select id, email from auth.users where email = 'YOUR_EMAIL_HERE';
 ## Publishing
 
 This repo is ready for GitHub Pages from the `main` branch root.
+
+
+## Admin Login
+
+The live app uses Supabase email OTP login. Admin users enter their email, paste the OTP from email, and the app unlocks editing only when that email exists in `public.admin_users`.
